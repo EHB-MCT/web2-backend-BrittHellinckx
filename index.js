@@ -170,7 +170,7 @@ app.post('/artpieces', async (req, res) => {
 });
 
 //Delete artpiece
-//CHECK WHETHER CORRECT
+//DOESN4T WORK - to delete:61bcdb7fdfc54479eb76e459
 app.delete('/artpieces/:id', async (req, res) => {
     if (!req.params.id || req.params.id.length != 24) {
         res.status(400).send('bad result, missing id or id is not 24 chars long');
@@ -181,7 +181,7 @@ app.delete('/artpieces/:id', async (req, res) => {
         await client.connect();
 
         //Collect data from artpiece with this ID
-        const collection = client.db('course-project').collection('colours'); ///CHANGE TO ALL ART
+        const collection = client.db('course-project').collection('artpieces');
 
         // Create a query for a challenge to delete
         const query = {
@@ -192,7 +192,7 @@ app.delete('/artpieces/:id', async (req, res) => {
         }
 
         // Deleting the challenge
-        const result = await col.deleteOne(query);
+        const result = await collection.deleteOne(query);
         if (result.deletedCount === 1) {
             res
                 .status(200)
@@ -214,15 +214,14 @@ app.delete('/artpieces/:id', async (req, res) => {
 })
 
 //Change artpiece
-//CHECK WHETHER CORRECT
 app.put("/challenges/:id", async (req, res) => {
     // check for body data
     const error = {
         error: "Bad request",
-        value: "Missing name, points, session or course"
+        value: "Missing status"
     }
 
-    if (!req.body.name || !req.body.points || !req.body.course) {
+    if (!req.body.status) {
         res.status(400).send(error);
         return;
     }
@@ -231,7 +230,7 @@ app.put("/challenges/:id", async (req, res) => {
         await client.connect();
 
         //Collect all data from artpieces
-        const collection = client.db('course-project').collection('colours'); ///CHANGE TO ALL ART
+        const collection = client.db('course-project').collection('artpieces');
 
         // Create a query for a challenge to update
         const query = {
@@ -240,22 +239,42 @@ app.put("/challenges/:id", async (req, res) => {
         const message = {
             deleted: "Challenge updated"
         }
+        //update colours
+        if (req.body.type == "colour") {
+            let updateColours = {
+                type: "colours",
+                code1: req.body.code1,
+                code2: req.body.code2,
+                code3: req.body.code3,
+                code4: req.body.code4,
+                status: !req.body.status
+            }
+            console.log(query, updateColours);
+            // Updating the artpiece
+            const result = await collection.updateOne(query, {
+                $set: updateColours
+            });
+            // Send back success message
+            res.status(201).send(result);
 
-        // update a challenge
-        const updateChal = {
-            name: req.body.name,
-            points: req.body.points,
-            session: req.body.session,
-            course: req.body.course,
-        };
-        console.log(query, updateChal);
-        // Updating the challenge
-        const result = await col.updateOne(query, {
-            $set: updateChal
-        });
+        }
+        //update photo
+        else {
+            let updatePhoto = {
+                type: "photo",
+                author: req.body.author,
+                url: req.body.url,
+                status: !req.body.status
+            }
+            console.log(query, updatePhoto);
+            // Updating the artpiece
+            const result = await collection.updateOne(query, {
+                $set: updatePhoto
+            });
+            // Send back success message
+            res.status(201).send(result);
+        }
 
-        // Send back success message
-        res.status(201).send(result);
     } catch (error) {
         console.log(error);
         res.status(500).send({
