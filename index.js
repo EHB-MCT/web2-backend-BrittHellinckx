@@ -99,31 +99,64 @@ app.post('/artpieces', async (req, res) => {
         //Collect all data from artpieces
         const collection = client.db('course-project').collection('artpieces');
 
-        //validation for double challenges 
-        const myDoc = await col.findOne({
-            name: req.body.name
-        }); // Find document 
-        if (myDoc) {
-            res.status(400).send('Bad request: boardgame already exists with name' + req.body.name);
-            return; //cause we don't want the code to continue
+        //validation for double artpieces 
+        if (req.body.type == "colour") {
+            const myDoc = await collection.findOne({
+                code1: req.body.code1,
+                code2: req.body.code2,
+                code3: req.body.code3,
+                code4: req.body.code4,
+            });
+            // Find document 
+            if (myDoc) {
+                res.status(400).send('Bad request: these colours already exists');
+                return; //cause we don't want the code to continue
+            }
+        } else {
+            const myDoc = await collection.findOne({
+                url: req.body.url,
+            });
+            // Find document 
+            if (myDoc) {
+                res.status(400).send('Bad request: this photo already exists');
+                return; //cause we don't want the code to continue
+            }
         }
 
-        //save new challenge
-        let newChallenge = {
-            name: req.body.name,
-            points: req.body.points,
-            course: req.body.course,
-            session: req.body.session
+        //save new artpiece
+        if (req.body.type == "colour") {
+            let colours = {
+                type: "colours",
+                code1: req.body.code1,
+                code2: req.body.code2,
+                code3: req.body.code3,
+                code4: req.body.code4,
+                status: "saved"
+            }
+
+            //insert into database
+            let insertResult = await collection.insertOne(colours);
+
+            //send back succes message
+            res.status(201).json(colours);
+            console.log(colours)
+            return;
+        } else {
+            let photo = {
+                type: "photo",
+                author: req.body.author,
+                url: req.body.url,
+                status: "saved"
+            }
+
+            //insert into database
+            let insertResult = await collection.insertOne(photo);
+
+            //send back succes message
+            res.status(201).json(photo);
+            console.log(photo)
+            return;
         }
-
-        //insert into database
-        let insertResult = await col.insertOne(newChallenge);
-
-        //send back succes message
-
-        res.status(201).json(newChallenge);
-        console.log(newChallenge)
-        return;
 
     } catch (error) {
         console.log(error);
