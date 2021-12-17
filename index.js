@@ -1,3 +1,8 @@
+//event.target.closest('.?').id .? = id 
+//event.target.classname.indexOf('?') !== -1
+//npx webpack watch : auto push script to main
+
+
 const express = require('express');
 const fs = require('fs/promises'); //NOT USED?
 const bodyParser = require('body-parser');
@@ -32,7 +37,7 @@ app.get('/artpieces', async (req, res) => {
         await client.connect();
 
         //Collect all data from artpieces
-        const collection = client.db('course-project').collection('colours'); ///CHANGE TO ALL ART
+        const collection = client.db('course-project').collection('artpieces');
         const art = await collection.find({}).toArray();
 
         //Send back the data from the artpieces
@@ -49,14 +54,13 @@ app.get('/artpieces', async (req, res) => {
 })
 
 //Return one artpiece
-// DOESN'T WORK
 app.get('/artpieces/:id', async (req, res) => {
     try {
         //Connect to database
         await client.connect();
 
         //Collect data from artpiece with this ID
-        const collection = client.db('course-project').collection('colours'); ///CHANGE TO ALL ART
+        const collection = client.db('course-project').collection('artpieces');
         const query = {
             _id: ObjectId(req.query.id)
         };
@@ -82,11 +86,9 @@ app.get('/artpieces/:id', async (req, res) => {
 })
 
 //save artpiece
-//HOW WILL I USE SAVE?
 app.post('/artpieces', async (req, res) => {
-
-    if (!req.body.image) {
-        res.status(400).send('bad result, missing image');
+    if (!req.body.type) {
+        res.status(400).send('bad result, missing type');
         return;
     }
 
@@ -95,7 +97,7 @@ app.post('/artpieces', async (req, res) => {
         await client.connect();
 
         //Collect all data from artpieces
-        const collection = client.db('course-project').collection('colours'); ///CHANGE TO ALL ART
+        const collection = client.db('course-project').collection('artpieces');
 
         //validation for double challenges 
         const myDoc = await col.findOne({
