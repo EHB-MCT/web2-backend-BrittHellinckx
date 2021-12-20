@@ -1,19 +1,17 @@
-//event.target.closest('.?').id .? = id 
-//event.target.classname.indexOf('?') !== -1
-//npx webpack watch : auto push script to main
-
+//npm start
 
 const express = require('express');
 const fs = require('fs/promises'); //NOT USED?
 const bodyParser = require('body-parser');
+const cors = require("cors");
 const {
     MongoClient,
     ObjectId
 } = require("mongodb")
 require('dotenv').config();
 
-//const cors = require("cors");
-//app.use(cors());
+
+
 
 //Create Mongo client
 const client = new MongoClient(process.env.URL);
@@ -23,12 +21,14 @@ const port = process.env.PORT;
 
 app.use(express.static('public'));
 app.use(bodyParser.json());
-
+app.use(cors());
 
 //Root route
 app.get('/', (req, res) => {
     res.status(300).redirect('/info.html');
 })
+
+/////////////////////////////////////ARTPIECES////////////////////////////////////////////
 
 //Return all artpieces
 app.get('/artpieces', async (req, res) => {
@@ -214,7 +214,7 @@ app.delete('/artpieces/:id', async (req, res) => {
 })
 
 //Change artpiece
-app.put("/challenges/:id", async (req, res) => {
+app.put("/artpieces/:id", async (req, res) => {
     // check for body data
     const error = {
         error: "Bad request",
@@ -285,6 +285,63 @@ app.put("/challenges/:id", async (req, res) => {
         await client.close();
     }
 });
+
+////////////////////////////////////POSTS/////////////////////////////////////////////////
+
+//Return all posts
+app.get('/posts', async (req, res) => {
+    try {
+        //Connect to database
+        await client.connect();
+
+        //Collect all data from artpieces
+        const collection = client.db('course-project').collection('posts');
+        const post = await collection.find({}).toArray();
+
+        //Send back the data from the artpieces
+        res.status(200).send(post);
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({
+            error: 'An error has occured',
+            value: error
+        });
+    } finally {
+        await client.close();
+    }
+})
+
+//Return one post
+app.get('/posts/:id', async (req, res) => {
+    try {
+        //Connect to database
+        await client.connect();
+
+        //Collect data from artpiece with this ID
+        const collection = client.db('course-project').collection('posts');
+        const query = {
+            _id: ObjectId(req.query.id)
+        };
+        const post = await collection.findOne(query);
+
+        //Check whether artpiece with this ID exists
+        if (post) {
+            //send back file
+            res.status(200).send(post);
+            return;
+        } else {
+            res.status(400).send('Post could not be found with id:' + req.params.id);
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({
+            error: 'An error has occured',
+            value: error
+        });
+    } finally {
+        await client.close();
+    }
+})
 
 app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
