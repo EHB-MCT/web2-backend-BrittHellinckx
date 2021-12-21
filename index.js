@@ -100,10 +100,10 @@ app.post('/artpieces', async (req, res) => {
         //validation for double artpieces 
         if (req.body.type == "colour") {
             const myDoc = await collection.findOne({
-                code1: req.body.code1,
-                code2: req.body.code2,
-                code3: req.body.code3,
-                code4: req.body.code4,
+                c1: req.body.c1,
+                c2: req.body.c2,
+                c3: req.body.c3,
+                c4: req.body.c4,
             });
             // Find document 
             if (myDoc) {
@@ -124,17 +124,15 @@ app.post('/artpieces', async (req, res) => {
         //save new artpiece
         if (req.body.type == "colour") {
             let colours = {
-                type: "colours",
-                code1: req.body.code1,
-                code2: req.body.code2,
-                code3: req.body.code3,
-                code4: req.body.code4,
+                type: "colour",
+                c1: req.body.c1,
+                c2: req.body.c2,
+                c3: req.body.c3,
+                c4: req.body.c4,
                 status: "saved"
             }
-
             //insert into database
             let insertResult = await collection.insertOne(colours);
-
             //send back succes message
             res.status(201).json(colours);
             console.log(colours)
@@ -146,10 +144,8 @@ app.post('/artpieces', async (req, res) => {
                 url: req.body.url,
                 status: "saved"
             }
-
             //insert into database
             let insertResult = await collection.insertOne(photo);
-
             //send back succes message
             res.status(201).json(photo);
             console.log(photo)
@@ -167,10 +163,9 @@ app.post('/artpieces', async (req, res) => {
     }
 });
 
-//Delete artpiece
-//DOESN4T WORK - to delete:61bcdb7fdfc54479eb76e459
+//Delete artpiece 
 app.delete('/artpieces/:id', async (req, res) => {
-    if (!req.params.id || req.params.id.length != 24) {
+    if (!req.query.id || req.query.id.length != 24) {
         res.status(400).send('bad result, missing id or id is not 24 chars long');
         return;
     }
@@ -183,7 +178,7 @@ app.delete('/artpieces/:id', async (req, res) => {
 
         // Create a query for a challenge to delete
         const query = {
-            _id: ObjectId(req.params.id)
+            _id: ObjectId(req.query.id)
         };
         const message = {
             deleted: "Challenge deleted"
@@ -200,7 +195,7 @@ app.delete('/artpieces/:id', async (req, res) => {
                 .status(404)
                 .send("No documents matched the query. Deleted 0 documents.");
         }
-    } catch (err) {
+    } catch (error) {
         console.log(error);
         res.status(500).send({
             error: 'an error has occured',
@@ -232,7 +227,7 @@ app.put("/artpieces/:id", async (req, res) => {
 
         // Create a query for a challenge to update
         const query = {
-            _id: ObjectId(req.params.id)
+            _id: ObjectId(req.body.id)
         };
         const message = {
             deleted: "Challenge updated"
@@ -340,89 +335,6 @@ app.get('/posts/:id', async (req, res) => {
         await client.close();
     }
 })
-//save artpiece
-app.post('/posts', async (req, res) => {
-    if (!req.body.type) {
-        res.status(400).send('bad result, missing type');
-        return;
-    }
-
-    try {
-        //Connect to database
-        await client.connect();
-
-        //Collect all data from artpieces
-        const collection = client.db('course-project').collection('posts');
-
-        //validation for double artpieces 
-        if (req.body.type == "colour") {
-            const myDoc = await collection.findOne({
-                code1: req.body.code1,
-                code2: req.body.code2,
-                code3: req.body.code3,
-                code4: req.body.code4,
-            });
-            // Find document 
-            if (myDoc) {
-                res.status(400).send('Bad request: these colours already exists');
-                return; //cause we don't want the code to continue
-            }
-        } else {
-            const myDoc = await collection.findOne({
-                url: req.body.url,
-            });
-            // Find document 
-            if (myDoc) {
-                res.status(400).send('Bad request: this photo already exists');
-                return; //cause we don't want the code to continue
-            }
-        }
-
-        //save new artpiece
-        if (req.body.type == "colour") {
-            let colours = {
-                type: "colours",
-                code1: req.body.code1,
-                code2: req.body.code2,
-                code3: req.body.code3,
-                code4: req.body.code4,
-                status: "saved"
-            }
-
-            //insert into database
-            let insertResult = await collection.insertOne(colours);
-
-            //send back succes message
-            res.status(201).json(colours);
-            console.log(colours)
-            return;
-        } else {
-            let photo = {
-                type: "photo",
-                author: req.body.author,
-                url: req.body.url,
-                status: "saved"
-            }
-
-            //insert into database
-            let insertResult = await collection.insertOne(photo);
-
-            //send back succes message
-            res.status(201).json(photo);
-            console.log(photo)
-            return;
-        }
-
-    } catch (error) {
-        console.log(error);
-        res.status(500).send({
-            error: 'an error has occured',
-            value: error
-        });
-    } finally {
-        await client.close();
-    }
-});
 
 
 app.listen(port, () => {
