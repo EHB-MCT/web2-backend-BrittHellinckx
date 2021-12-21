@@ -1,7 +1,7 @@
 //npm start
 
 const express = require('express');
-const fs = require('fs/promises'); //NOT USED?
+const fs = require('fs/promises');
 const bodyParser = require('body-parser');
 const cors = require("cors");
 const {
@@ -9,9 +9,6 @@ const {
     ObjectId
 } = require("mongodb")
 require('dotenv').config();
-
-
-
 
 //Create Mongo client
 const client = new MongoClient(process.env.URL);
@@ -343,6 +340,90 @@ app.get('/posts/:id', async (req, res) => {
         await client.close();
     }
 })
+//save artpiece
+app.post('/posts', async (req, res) => {
+    if (!req.body.type) {
+        res.status(400).send('bad result, missing type');
+        return;
+    }
+
+    try {
+        //Connect to database
+        await client.connect();
+
+        //Collect all data from artpieces
+        const collection = client.db('course-project').collection('posts');
+
+        //validation for double artpieces 
+        if (req.body.type == "colour") {
+            const myDoc = await collection.findOne({
+                code1: req.body.code1,
+                code2: req.body.code2,
+                code3: req.body.code3,
+                code4: req.body.code4,
+            });
+            // Find document 
+            if (myDoc) {
+                res.status(400).send('Bad request: these colours already exists');
+                return; //cause we don't want the code to continue
+            }
+        } else {
+            const myDoc = await collection.findOne({
+                url: req.body.url,
+            });
+            // Find document 
+            if (myDoc) {
+                res.status(400).send('Bad request: this photo already exists');
+                return; //cause we don't want the code to continue
+            }
+        }
+
+        //save new artpiece
+        if (req.body.type == "colour") {
+            let colours = {
+                type: "colours",
+                code1: req.body.code1,
+                code2: req.body.code2,
+                code3: req.body.code3,
+                code4: req.body.code4,
+                status: "saved"
+            }
+
+            //insert into database
+            let insertResult = await collection.insertOne(colours);
+
+            //send back succes message
+            res.status(201).json(colours);
+            console.log(colours)
+            return;
+        } else {
+            let photo = {
+                type: "photo",
+                author: req.body.author,
+                url: req.body.url,
+                status: "saved"
+            }
+
+            //insert into database
+            let insertResult = await collection.insertOne(photo);
+
+            //send back succes message
+            res.status(201).json(photo);
+            console.log(photo)
+            return;
+        }
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({
+            error: 'an error has occured',
+            value: error
+        });
+    } finally {
+        await client.close();
+    }
+});
+
 
 app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
