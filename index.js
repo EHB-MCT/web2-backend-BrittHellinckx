@@ -207,14 +207,13 @@ app.delete('/artpieces/:id', async (req, res) => {
 })
 
 //Change artpiece
-app.put("/artpieces/:id", async (req, res) => {
+app.patch("/artpieces/:id", async (req, res) => {
     // check for body data
-    const error = {
-        error: "Bad request",
-        value: "Missing status"
-    }
-
     if (!req.body.status) {
+        const error = {
+            error: "Bad request",
+            value: "Missing status"
+        }
         res.status(400).send(error);
         return;
     }
@@ -225,49 +224,24 @@ app.put("/artpieces/:id", async (req, res) => {
         //Collect all data from artpieces
         const collection = client.db('course-project').collection('artpieces');
 
-        // Create a query for a challenge to update
+        // Create a query to update
         const query = {
-            _id: ObjectId(req.body.id)
+            _id: ObjectId(req.query.id)
         };
         const message = {
-            deleted: "Challenge updated"
-        }
-        //update colours
-        if (req.body.type == "colour") {
-            let updateColours = {
-                type: "colours",
-                code1: req.body.code1,
-                code2: req.body.code2,
-                code3: req.body.code3,
-                code4: req.body.code4,
-                status: !req.body.status
-            }
-            console.log(query, updateColours);
-            // Updating the artpiece
-            const result = await collection.updateOne(query, {
-                $set: updateColours
-            });
-            // Send back success message
-            res.status(201).send(result);
-
-        }
-        //update photo
-        else {
-            let updatePhoto = {
-                type: "photo",
-                author: req.body.author,
-                url: req.body.url,
-                status: !req.body.status
-            }
-            console.log(query, updatePhoto);
-            // Updating the artpiece
-            const result = await collection.updateOne(query, {
-                $set: updatePhoto
-            });
-            // Send back success message
-            res.status(201).send(result);
+            deleted: "Artpiece updated"
         }
 
+        //update status
+        let updateStatus = {
+            status: req.body.status
+        }
+        const result = await collection.updateMany(query, {
+            $set: updateStatus
+        });
+
+        // Send back success message
+        res.status(201).send(result);
     } catch (error) {
         console.log(error);
         res.status(500).send({
