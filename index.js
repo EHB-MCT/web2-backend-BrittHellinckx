@@ -1,5 +1,3 @@
-//npm start
-
 const express = require('express');
 const fs = require('fs/promises');
 const bodyParser = require('body-parser');
@@ -13,21 +11,22 @@ require('dotenv').config();
 //Create Mongo client
 const client = new MongoClient(process.env.URL);
 
+//Set app and port
 const app = express()
 const port = process.env.PORT;
 
+//App.use
 app.use(express.static('public'));
 app.use(bodyParser.json());
 app.use(cors());
 
+//////////////////////////////////////////////////////////////////////////////////////////
 //Root route
 app.get('/', (req, res) => {
-    //res.status(300).redirect('/info.html');
     res.send('Everything is OK!')
 })
 
 /////////////////////////////////////ARTPIECES////////////////////////////////////////////
-
 //Return all artpieces
 app.get('/artpieces', async (req, res) => {
     try {
@@ -53,6 +52,7 @@ app.get('/artpieces', async (req, res) => {
 
 //Return one artpiece
 app.get('/artpieces/:id', async (req, res) => {
+    //Get
     try {
         //Connect to database
         await client.connect();
@@ -66,30 +66,36 @@ app.get('/artpieces/:id', async (req, res) => {
 
         //Check whether artpiece with this ID exists
         if (art) {
-            //send back file
+            //Send back file
             res.status(200).send(art);
             return;
         } else {
-            res.status(400).send('Artpiece could not be found with id:' + req.params.id);
+            //Send 'could not be found'
+            res.status(400).send('Artpiece could not be found with id:' + req.query.id);
         }
-    } catch (error) {
+    }
+    //Error
+    catch (error) {
         console.log(error);
         res.status(500).send({
             error: 'An error has occured',
             value: error
         });
-    } finally {
+    }
+    //End
+    finally {
         await client.close();
     }
 })
 
-//save artpiece
+//Save artpiece
 app.post('/artpieces', async (req, res) => {
+    //Check for type
     if (!req.body.type) {
-        res.status(400).send('bad result, missing type');
+        res.status(400).send('Bad result, missing type');
         return;
     }
-
+    //Save
     try {
         //Connect to database
         await client.connect();
@@ -97,7 +103,8 @@ app.post('/artpieces', async (req, res) => {
         //Collect all data from artpieces
         const collection = client.db('course-project').collection('artpieces');
 
-        //validation for double artpieces 
+        //Validation for double artpieces
+        //Colour 
         if (req.body.type == "colour") {
             const myDoc = await collection.findOne({
                 c1: req.body.c1,
@@ -105,23 +112,24 @@ app.post('/artpieces', async (req, res) => {
                 c3: req.body.c3,
                 c4: req.body.c4,
             });
-            // Find document 
             if (myDoc) {
                 res.status(400).send('Bad request: these colours already exists');
-                return; //cause we don't want the code to continue
+                return;
             }
-        } else {
+        }
+        //Photo
+        else {
             const myDoc = await collection.findOne({
                 url: req.body.url,
             });
-            // Find document 
             if (myDoc) {
                 res.status(400).send('Bad request: this photo already exists');
-                return; //cause we don't want the code to continue
+                return;
             }
         }
 
-        //save new artpiece
+        //Save new artpiece
+        //Colour
         if (req.body.type == "colour") {
             let colours = {
                 type: "colour",
@@ -131,44 +139,52 @@ app.post('/artpieces', async (req, res) => {
                 c4: req.body.c4,
                 status: "saved"
             }
-            //insert into database
+            //Insert into database
             let insertResult = await collection.insertOne(colours);
-            //send back succes message
+            //Send back succesmessage
             res.status(201).json(colours);
             console.log(colours)
             return;
-        } else {
+        }
+        //Photo
+        else {
             let photo = {
                 type: "photo",
                 author: req.body.author,
                 url: req.body.url,
                 status: "saved"
             }
-            //insert into database
+            //Insert into database
             let insertResult = await collection.insertOne(photo);
-            //send back succes message
+            //Send back succesmessage
             res.status(201).json(photo);
             console.log(photo)
             return;
         }
 
-    } catch (error) {
+    }
+    //Error
+    catch (error) {
         console.log(error);
         res.status(500).send({
-            error: 'an error has occured',
+            error: 'An error has occured',
             value: error
         });
-    } finally {
+    }
+    //End
+    finally {
         await client.close();
     }
 });
 
 //Delete artpiece 
 app.delete('/artpieces/:id', async (req, res) => {
+    //Check for id
     if (!req.query.id || req.query.id.length != 24) {
-        res.status(400).send('bad result, missing id or id is not 24 chars long');
+        res.status(400).send('Bad result, missing id or id is not 24 chars long');
         return;
     }
+    //Delete
     try {
         //Connect to database
         await client.connect();
@@ -176,7 +192,7 @@ app.delete('/artpieces/:id', async (req, res) => {
         //Collect data from artpiece with this ID
         const collection = client.db('course-project').collection('artpieces');
 
-        // Create a query for a challenge to delete
+        //Create a query to delete
         const query = {
             _id: ObjectId(req.query.id)
         };
@@ -184,7 +200,7 @@ app.delete('/artpieces/:id', async (req, res) => {
             deleted: "Challenge deleted"
         }
 
-        // Deleting the challenge
+        //Deleting the artpiece
         const result = await collection.deleteOne(query);
         if (result.deletedCount === 1) {
             res
@@ -195,44 +211,46 @@ app.delete('/artpieces/:id', async (req, res) => {
                 .status(404)
                 .send("No documents matched the query. Deleted 0 documents.");
         }
-    } catch (error) {
+    }
+    //Error
+    catch (error) {
         console.log(error);
         res.status(500).send({
-            error: 'an error has occured',
+            error: 'An error has occured',
             value: error
         });
-    } finally {
+    }
+    //End
+    finally {
         await client.close();
     }
 })
 
 //Change artpiece
 app.patch("/artpieces/:id", async (req, res) => {
-    // check for body data
-    if (!req.body.status) {
+    //Check for status and id
+    if (!req.body.status || !req.query.id || req.query.id.length != 24) {
         const error = {
             error: "Bad request",
-            value: "Missing status"
+            value: "Missing status/ id or id is not 24 chars long"
         }
         res.status(400).send(error);
         return;
     }
+    //Patch
     try {
-        //connect to the database
+        //Connect to the database
         await client.connect();
 
         //Collect all data from artpieces
         const collection = client.db('course-project').collection('artpieces');
 
-        // Create a query to update
+        //Create a query to update
         const query = {
             _id: ObjectId(req.query.id)
         };
-        const message = {
-            deleted: "Artpiece updated"
-        }
 
-        //update status
+        //Update status
         let updateStatus = {
             status: req.body.status
         }
@@ -240,15 +258,19 @@ app.patch("/artpieces/:id", async (req, res) => {
             $set: updateStatus
         });
 
-        // Send back success message
+        //Send back successmessage
         res.status(201).send(result);
-    } catch (error) {
+    }
+    //Error
+    catch (error) {
         console.log(error);
         res.status(500).send({
-            error: "something went wrong",
+            error: "An error has occured",
             value: error,
         });
-    } finally {
+    }
+    //End
+    finally {
         await client.close();
     }
 });
@@ -257,60 +279,71 @@ app.patch("/artpieces/:id", async (req, res) => {
 
 //Return all posts
 app.get('/posts', async (req, res) => {
+    //Get
     try {
         //Connect to database
         await client.connect();
 
-        //Collect all data from artpieces
+        //Collect all data from posts
         const collection = client.db('course-project').collection('posts');
         const post = await collection.find({}).toArray();
 
-        //Send back the data from the artpieces
+        //Send back the data from the posts
         res.status(200).send(post);
-    } catch (error) {
+    }
+    //Error
+    catch (error) {
         console.log(error);
         res.status(500).send({
             error: 'An error has occured',
             value: error
         });
-    } finally {
+    }
+    //End
+    finally {
         await client.close();
     }
 })
 
 //Return one post
 app.get('/posts/:id', async (req, res) => {
+    //Get
     try {
         //Connect to database
         await client.connect();
 
-        //Collect data from artpiece with this ID
+        //Collect data from post with this ID
         const collection = client.db('course-project').collection('posts');
         const query = {
             _id: ObjectId(req.query.id)
         };
         const post = await collection.findOne(query);
 
-        //Check whether artpiece with this ID exists
+        //Check whether post with this ID exists
         if (post) {
-            //send back file
+            //Send back file
             res.status(200).send(post);
             return;
         } else {
             res.status(400).send('Post could not be found with id:' + req.params.id);
         }
-    } catch (error) {
+    }
+    //Error
+    catch (error) {
         console.log(error);
         res.status(500).send({
             error: 'An error has occured',
             value: error
         });
-    } finally {
+    }
+    //End
+    finally {
         await client.close();
     }
 })
 
-
+//////////////////////////////////////////////////////////////////////////////////////////
+//Port
 app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
 })
