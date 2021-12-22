@@ -6,5 +6,5 @@ Part3: https://www.youtube.com/watch?v=o7Mh1zOAjDY
 
 Web2 - Group project with Rebecca Rosies & Liese Cordeyn
 
-MongoDB Tutorial - Patch/ Rename
+MongoDB Tutorial - Patch/ Rename - Tutorial gekregen van Liese Cordeyn
 https://www.mongodbtutorial.org/mongodb-crud/mongodb-rename-field/
