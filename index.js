@@ -342,7 +342,7 @@ app.get('/posts/:id', async (req, res) => {
     }
 })
 //Change post
-app.patch("/post/:id", async (req, res) => {
+app.patch("/posts/:id", async (req, res) => {
     //Check for liked and id
     if (!req.body.liked || !req.query.id || req.query.id.length != 24) {
         const error = {
