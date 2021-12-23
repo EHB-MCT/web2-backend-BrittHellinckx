@@ -344,7 +344,7 @@ app.get('/posts/:id', async (req, res) => {
 //Change post
 app.patch("/posts/:id", async (req, res) => {
     //Check for liked and id
-    if (!req.query.id || req.query.id.length != 24) {
+    if (!req.body.liked || !req.query.id || req.query.id.length != 24) {
         const error = {
             error: "Bad request",
             value: "Missing liked/ id or id is not 24 chars long"
