@@ -341,6 +341,54 @@ app.get('/posts/:id', async (req, res) => {
         await client.close();
     }
 })
+//Change post
+app.patch("/post/:id", async (req, res) => {
+    //Check for liked and id
+    if (!req.body.liked || !req.query.id || req.query.id.length != 24) {
+        const error = {
+            error: "Bad request",
+            value: "Missing liked/ id or id is not 24 chars long"
+        }
+        res.status(400).send(error);
+        return;
+    }
+    //Patch
+    try {
+        //Connect to the database
+        await client.connect();
+
+        //Collect all data from artpieces
+        const collection = client.db('course-project').collection('posts');
+
+        //Create a query to update
+        const query = {
+            _id: ObjectId(req.query.id)
+        };
+
+        //Update status
+        let updateLiked = {
+            liked: req.body.liked
+        }
+        const result = await collection.updateMany(query, {
+            $set: updateLiked
+        });
+
+        //Send back successmessage
+        res.status(201).send(result);
+    }
+    //Error
+    catch (error) {
+        console.log(error);
+        res.status(500).send({
+            error: "An error has occured",
+            value: error,
+        });
+    }
+    //End
+    finally {
+        await client.close();
+    }
+});
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //Port
